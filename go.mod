@@ -2,7 +2,7 @@ module github.com/dvaumoron/puzzleredisclient
 
 go 1.19
 
-require github.com/redis/go-redis/v9 v9.0.1
+require github.com/redis/go-redis/v9 v9.0.3
 
 require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
