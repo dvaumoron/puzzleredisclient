@@ -28,7 +28,7 @@ import (
 func Create() *redis.Client {
 	dbNum, err := strconv.Atoi(os.Getenv("REDIS_SERVER_DB"))
 	if err != nil {
-		log.Fatal("Failed to parse REDIS_SERVER_DB")
+		log.Fatalln("Failed to parse REDIS_SERVER_DB")
 	}
 
 	return redis.NewClient(&redis.Options{
