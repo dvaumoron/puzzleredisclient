@@ -18,18 +18,25 @@
 package puzzleredisclient
 
 import (
-	"log"
+	"context"
+	"fmt"
 	"os"
 	"strconv"
 
+	"github.com/dvaumoron/puzzlelogger"
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 )
 
-func Create() *redis.Client {
+const redisKey = "redis"
+
+func Create(logger *zap.Logger) *redis.Client {
 	dbNum, err := strconv.Atoi(os.Getenv("REDIS_SERVER_DB"))
 	if err != nil {
-		log.Fatalln("Failed to parse REDIS_SERVER_DB")
+		logger.Fatal("Failed to parse REDIS_SERVER_DB")
 	}
+
+	redis.SetLogger(loggerWrapper{inner: logger})
 
 	return redis.NewClient(&redis.Options{
 		Addr:     os.Getenv("REDIS_SERVER_ADDR"),
@@ -37,4 +44,12 @@ func Create() *redis.Client {
 		Password: os.Getenv("REDIS_SERVER_PASSWORD"),
 		DB:       dbNum,
 	})
+}
+
+type loggerWrapper struct {
+	inner *zap.Logger
+}
+
+func (w loggerWrapper) Printf(ctx context.Context, msg string, args ...any) {
+	fmt.Fprintf(puzzlelogger.InfoWrapper{Inner: w.inner, Lib: redisKey}, msg, args...)
 }
