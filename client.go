@@ -41,12 +41,12 @@ func Create(logger *otelzap.Logger) *redis.Client {
 	})
 
 	// Enable tracing instrumentation.
-	if err := redisotel.InstrumentTracing(rdb); err != nil {
+	if err = redisotel.InstrumentTracing(rdb); err != nil {
 		logger.Fatal("Failed to enable tracing instrumentation", zap.Error(err))
 	}
 
 	// Enable metrics instrumentation.
-	if err := redisotel.InstrumentMetrics(rdb); err != nil {
+	if err = redisotel.InstrumentMetrics(rdb); err != nil {
 		logger.Fatal("Failed to enable metrics instrumentation", zap.Error(err))
 	}
 
