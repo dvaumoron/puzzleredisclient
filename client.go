@@ -18,38 +18,37 @@
 package puzzleredisclient
 
 import (
-	"context"
-	"fmt"
 	"os"
 	"strconv"
 
-	"github.com/dvaumoron/puzzlelogger"
+	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
+	"github.com/uptrace/opentelemetry-go-extra/otelzap"
 	"go.uber.org/zap"
 )
 
-const redisKey = "redis"
-
-func Create(logger *zap.Logger) *redis.Client {
+func Create(logger *otelzap.Logger) *redis.Client {
 	dbNum, err := strconv.Atoi(os.Getenv("REDIS_SERVER_DB"))
 	if err != nil {
-		logger.Fatal("Failed to parse REDIS_SERVER_DB")
+		logger.Fatal("Failed to parse REDIS_SERVER_DB", zap.Error(err))
 	}
 
-	redis.SetLogger(loggerWrapper{inner: logger})
-
-	return redis.NewClient(&redis.Options{
+	rdb := redis.NewClient(&redis.Options{
 		Addr:     os.Getenv("REDIS_SERVER_ADDR"),
 		Username: os.Getenv("REDIS_SERVER_USERNAME"),
 		Password: os.Getenv("REDIS_SERVER_PASSWORD"),
 		DB:       dbNum,
 	})
-}
 
-type loggerWrapper struct {
-	inner *zap.Logger
-}
+	// Enable tracing instrumentation.
+	if err := redisotel.InstrumentTracing(rdb); err != nil {
+		logger.Fatal("Failed to enable tracing instrumentation", zap.Error(err))
+	}
 
-func (w loggerWrapper) Printf(ctx context.Context, msg string, args ...any) {
-	fmt.Fprintf(puzzlelogger.InfoWrapper{Inner: w.inner, Lib: redisKey}, msg, args...)
+	// Enable metrics instrumentation.
+	if err := redisotel.InstrumentMetrics(rdb); err != nil {
+		logger.Fatal("Failed to enable metrics instrumentation", zap.Error(err))
+	}
+
+	return rdb
 }
